@@ -1,5 +1,7 @@
 #include "deliveryoptimizer/adapters/routing_facade.hpp"
 
+#include <algorithm>
+#include <cerrno>
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
@@ -14,7 +16,12 @@
 
 namespace {
 
-constexpr std::uint16_t kDefaultPort = 8080;
+constexpr std::uint16_t kDefaultPort = 8080U;
+constexpr int kDefaultDeliveries = 1;
+constexpr int kDefaultVehicles = 1;
+constexpr int kMaxDeliveries = 10000;
+constexpr int kMaxVehicles = 2000;
+constexpr std::size_t kMaxWorkerThreads = 64U;
 
 [[nodiscard]] std::optional<std::uint16_t> ResolveListenPort() {
   const char* raw_port = std::getenv("DELIVERYOPTIMIZER_PORT");
@@ -37,6 +44,38 @@ constexpr std::uint16_t kDefaultPort = 8080;
   return static_cast<std::uint16_t>(parsed_port);
 }
 
+[[nodiscard]] std::optional<std::size_t> ResolveBoundedCount(const std::optional<int>& parsed_value,
+                                                             const int default_value,
+                                                             const int max_value) {
+  const int value = parsed_value.value_or(default_value);
+  if (value <= 0 || value > max_value) {
+    return std::nullopt;
+  }
+
+  return static_cast<std::size_t>(value);
+}
+
+[[nodiscard]] std::size_t ResolveThreadCount() {
+  const auto detected = std::thread::hardware_concurrency();
+  const std::size_t default_threads = detected == 0U ? 1U : static_cast<std::size_t>(detected);
+
+  const char* raw_threads = std::getenv("DELIVERYOPTIMIZER_THREADS");
+  if (raw_threads == nullptr || *raw_threads == '\0') {
+    return default_threads;
+  }
+
+  errno = 0;
+  char* end = nullptr;
+  const long parsed = std::strtol(raw_threads, &end, 10);
+  const bool invalid = errno != 0 || end == raw_threads || *end != '\0' || parsed <= 0L;
+  if (invalid) {
+    return default_threads;
+  }
+
+  const auto requested_threads = static_cast<std::size_t>(parsed);
+  return std::min(requested_threads, kMaxWorkerThreads);
+}
+
 } // namespace
 
 int main() {
@@ -57,33 +96,32 @@ int main() {
       "/optimize",
       [](const drogon::HttpRequestPtr& request,
          std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
-        const int deliveries_param = request->getOptionalParameter<int>("deliveries").value_or(1);
-        const int vehicles_param = request->getOptionalParameter<int>("vehicles").value_or(1);
-
-        if (deliveries_param < 0 || vehicles_param < 0) {
+        const auto deliveries = ResolveBoundedCount(
+            request->getOptionalParameter<int>("deliveries"), kDefaultDeliveries, kMaxDeliveries);
+        const auto vehicles = ResolveBoundedCount(request->getOptionalParameter<int>("vehicles"),
+                                                  kDefaultVehicles, kMaxVehicles);
+        if (!deliveries.has_value() || !vehicles.has_value()) {
           Json::Value error_body;
-          error_body["error"] =
-              "Query parameters 'deliveries' and 'vehicles' must be non-negative integers.";
+          error_body["error"] = "invalid optimize query params";
+          error_body["deliveries_min"] = 1;
+          error_body["deliveries_max"] = kMaxDeliveries;
+          error_body["vehicles_min"] = 1;
+          error_body["vehicles_max"] = kMaxVehicles;
           auto response = drogon::HttpResponse::newHttpJsonResponse(error_body);
           response->setStatusCode(drogon::k400BadRequest);
           std::move(callback)(response);
           return;
         }
 
-        const auto deliveries = static_cast<std::size_t>(deliveries_param);
-        const auto vehicles = static_cast<std::size_t>(vehicles_param);
-
         Json::Value body;
-        body["summary"] =
-            deliveryoptimizer::adapters::RoutingFacade::Optimize(deliveries, vehicles);
+        body["summary"] = deliveryoptimizer::adapters::RoutingFacade::Optimize(deliveries.value(),
+                                                                               vehicles.value());
         std::move(callback)(drogon::HttpResponse::newHttpJsonResponse(body));
       },
       {drogon::Post});
 
   drogon::app().addListener("0.0.0.0", *port);
-  const unsigned int detected_threads = std::thread::hardware_concurrency();
-  const unsigned int thread_count = detected_threads == 0U ? 1U : detected_threads;
-  drogon::app().setThreadNum(thread_count);
+  drogon::app().setThreadNum(ResolveThreadCount());
   drogon::app().run();
 
   return 0;
