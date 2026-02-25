@@ -1,8 +1,6 @@
 # Delivery Optimizer
 
-This branch bootstraps the C++ backend scaffold (Conan + CMake + Drogon) and keeps the Next.js UI in `app/ui`.
-Legacy Python backend files were removed in this migration branch. Contributors still using the old
-Python server should switch to `docs/cpp-local-contributor-setup.md`.
+This branch introduces the C++ API runtime modules plus ARM routing stack assets (OSRM + VROOM) and an OSRM proxy endpoint.
 
 ## Contributor Docs
 
@@ -11,25 +9,17 @@ Python server should switch to `docs/cpp-local-contributor-setup.md`.
 
 ## Repository Layout
 
-- `app/api`: C++ HTTP server entrypoint.
+- `app/api`: C++ HTTP server entrypoint and endpoint modules.
 - `libs`: domain/application/adapter libraries.
-- `deploy`: deployment assets for ARM image builds and compose.
-- `tests`: C++ and integration tests.
+- `deploy`: Dockerfiles, compose files, and env files.
+- `tests`: C++ tests, local HTTP integration tests, and routing smoke tests.
 - `app/ui`: Next.js frontend.
 
-## API (Bootstrap Stage)
+## API Endpoints
 
 - `GET /health`
-- `POST /optimize?deliveries=<n>&vehicles=<n>`
-
-This endpoint is a bootstrap placeholder. JSON request-body handling and the real optimization
-contract are intentionally deferred to `#60`.
-
-Example:
-
-```bash
-curl -fsS -X POST "http://127.0.0.1:8080/optimize?deliveries=4&vehicles=2"
-```
+- `GET /optimize?deliveries=<n>&vehicles=<n>`
+- `GET /api/v1/osrm/*` (allowlisted OSRM services)
 
 ## Build (C++)
 
@@ -49,7 +39,21 @@ Run:
 ./build/build/Release/app/api/deliveryoptimizer-api
 ```
 
-The API listens on `8080` by default. Set `DELIVERYOPTIMIZER_PORT` to override it for local runs.
+## Routing Stack (Docker)
+
+```bash
+docker compose \
+  --env-file deploy/env/http-server.arm64.env \
+  -f deploy/compose/docker-compose.arm64.yml \
+  up --build -d
+```
+
+Quick checks:
+
+```bash
+curl -f http://127.0.0.1:8080/health
+curl -f "http://127.0.0.1:5001/nearest/v1/driving/-122.4194,37.7749?number=1&generate_hints=false"
+```
 
 ## UI
 
