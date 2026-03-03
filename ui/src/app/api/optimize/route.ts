@@ -90,9 +90,6 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error(error)
 
-    const message =
-      error instanceof Error ? error.message : ""
-
     if (isSolverClientError(error)) {
       return NextResponse.json(
         { error: "VROOM Solver service unavailable" },
