@@ -23,20 +23,20 @@ export const vehicleSchema = z.object({
     .int()
     .nonnegative()
     .optional()
-}).refine(
-  (data) =>
-    data.departureTime == null ||
-    data.returnTime == null ||
-    data.returnTime > data.departureTime,
-  {
-    message: "returnTime must be after departureTime"
-  })
-  .refine(
-  (data) => 
-    (data.departureTime === undefined) === (data.returnTime === undefined),
-  { 
-    message: "departureTime and returnTime must both be provided or both omitted" 
-  })
+  }).refine(
+    (data) => 
+      (data.departureTime === undefined) === (data.returnTime === undefined),
+    { 
+      message: "departureTime and returnTime must both be provided or both omitted" 
+    })
+    .refine(
+    (data) =>
+      data.departureTime == null ||
+      data.returnTime == null ||
+      data.returnTime > data.departureTime,
+    {
+      message: "returnTime must be after departureTime"
+    })
 
 /**
  * Ensure each ID is unique
