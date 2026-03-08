@@ -65,8 +65,8 @@ void RegisterOptimizeEndpoint(drogon::HttpAppFramework& app) {
         }
 
         Json::Value body;
-        body["summary"] = deliveryoptimizer::adapters::RoutingFacade::Optimize(deliveries.value(),
-                                                                               vehicles.value());
+        body["summary"] =
+            deliveryoptimizer::adapters::Optimize(deliveries.value(), vehicles.value());
         std::move(callback)(drogon::HttpResponse::newHttpJsonResponse(body));
       },
       {drogon::Post});
