@@ -115,6 +115,18 @@ deliveryoptimizer_set_local_http_test_port(
 )
 
 add_test(
+  NAME DeliveryOptimizerApiValidationTest.DeliveriesOptimizeRejectsExcessiveBodySize
+  COMMAND "${BASH_PROGRAM}"
+          "${CMAKE_CURRENT_SOURCE_DIR}/integration/http_server/deliveries_optimize_rejects_excessive_body_size_test.sh"
+          "$<TARGET_FILE:deliveryoptimizer_api>" "${PYTHON3_PROGRAM}" "${CURL_PROGRAM}"
+)
+set_tests_properties(
+  DeliveryOptimizerApiValidationTest.DeliveriesOptimizeRejectsExcessiveBodySize
+  PROPERTIES
+    TIMEOUT 30
+)
+
+add_test(
   NAME DeliveryOptimizerOsrmProxyTest.RejectsDisallowedService
   COMMAND "${BASH_PROGRAM}"
           "${CMAKE_CURRENT_SOURCE_DIR}/integration/http_server/osrm_proxy_rejects_disallowed_service_test.sh"

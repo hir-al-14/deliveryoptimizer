@@ -8,6 +8,12 @@
 
 #include <drogon/drogon.h>
 
+namespace {
+
+constexpr std::size_t kMaxRequestBodyBytes = 10U * 1024U * 1024U;
+
+} // namespace
+
 namespace deliveryoptimizer::api {
 
 int RunApiServer() {
@@ -20,6 +26,7 @@ int RunApiServer() {
 
   const auto options = LoadServerOptionsFromEnv();
   app.addListener("0.0.0.0", options.listen_port);
+  app.setClientMaxBodySize(kMaxRequestBodyBytes);
   app.setThreadNum(options.worker_threads);
   app.run();
 
