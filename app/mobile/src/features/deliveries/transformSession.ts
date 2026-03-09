@@ -11,7 +11,7 @@ export function transformSessionToDriverRoute(input: OptimizeRequestLike): Drive
     customerName: delivery.recipientName ?? `Recipient ${index + 1}`,
     phoneNumber: delivery.phoneNumber,
     packageCount: delivery.demand?.value ?? 1,
-    notes: delivery.notes ?? '',
+    notes: '',
     status: 'pending',
     lat: delivery.location?.lat ?? 0,
     lng: delivery.location?.lng ?? 0,

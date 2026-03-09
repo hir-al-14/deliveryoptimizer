@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -15,7 +14,8 @@ type Props = {
   onToggle: () => void;
   onChangeNote: (value: string) => void;
   onComplete: () => void;
-  onReport: () => void;
+  onNavigate: () => void;
+  onReportPress: () => void;
 };
 
 export default function DeliveryCard({
@@ -24,35 +24,14 @@ export default function DeliveryCard({
   onToggle,
   onChangeNote,
   onComplete,
-  onReport,
+  onNavigate,
+  onReportPress,
 }: Props) {
-  if (!stop) {
-    return null;
-  }
+  if (!stop) return null;
 
   const isCompleted = stop.status === 'completed';
   const isFailed = stop.status === 'failed';
   const isHistory = isCompleted || isFailed;
-
-  const handleReportPress = () => {
-    if (!stop.notes.trim()) {
-      Alert.alert('Note required', 'Please enter a note before reporting this stop.');
-      return;
-    }
-
-    Alert.alert(
-      'Report incomplete delivery?',
-      `Note: ${stop.notes}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Report Incomplete',
-          style: 'destructive',
-          onPress: onReport,
-        },
-      ]
-    );
-  };
 
   return (
     <Pressable
@@ -83,39 +62,44 @@ export default function DeliveryCard({
         <View style={styles.expandedSection}>
           <Text style={styles.metaText}>Packages: {stop.packageCount}</Text>
 
-          <TextInput
-            value={stop.notes}
-            onChangeText={onChangeNote}
-            placeholder="Add delivery note"
-            multiline
-            style={styles.noteInput}
-          />
+          {!isHistory ? (
+            <TextInput
+              value={stop.notes}
+              onChangeText={onChangeNote}
+              placeholder="Driver notes"
+              multiline
+              style={styles.noteInput}
+            />
+          ) : null}
 
           {isCompleted && stop.completedAt ? (
             <Text style={styles.statusText}>Completed at: {stop.completedAt}</Text>
           ) : null}
 
-          {isFailed && stop.failureReason ? (
-            <Text style={styles.statusText}>Failure reason: {stop.failureReason}</Text>
+          {isFailed ? (
+            <View style={styles.failureBox}>
+              <Text style={styles.failureLabel}>Report reason:</Text>
+              <Text style={styles.failureText}>
+                {stop.failureReason || 'No report reason provided'}
+              </Text>
+            </View>
           ) : null}
 
-          <View style={styles.buttonRow}>
-            {!isHistory ? (
-              <>
-                <Pressable style={styles.actionButton} onPress={onComplete}>
-                  <Text style={styles.actionText}>Complete</Text>
-                </Pressable>
+          {!isHistory ? (
+            <View style={styles.buttonRow}>
+              <Pressable style={styles.actionButton} onPress={onComplete}>
+                <Text style={styles.actionText}>Complete</Text>
+              </Pressable>
 
-                <Pressable style={styles.actionButton}>
-                  <Text style={styles.actionText}>Navigate</Text>
-                </Pressable>
+              <Pressable style={styles.actionButton} onPress={onNavigate}>
+                <Text style={styles.actionText}>Navigate</Text>
+              </Pressable>
 
-                <Pressable style={styles.actionButton} onPress={handleReportPress}>
-                  <Text style={styles.actionText}>Report</Text>
-                </Pressable>
-              </>
-            ) : null}
-          </View>
+              <Pressable style={styles.actionButton} onPress={onReportPress}>
+                <Text style={styles.actionText}>Report</Text>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
       ) : null}
     </Pressable>
@@ -205,6 +189,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#374151',
     marginBottom: 12,
+  },
+  failureBox: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    marginBottom: 12,
+  },
+  failureLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  failureText: {
+    fontSize: 14,
+    color: '#374151',
   },
   buttonRow: {
     flexDirection: 'row',

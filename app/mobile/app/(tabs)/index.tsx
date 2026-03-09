@@ -3,18 +3,24 @@ import React, { useMemo, useState } from 'react';
 import {
   Alert,
   LayoutAnimation,
+  Modal,
   Platform,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   UIManager,
   View,
 } from 'react-native';
 import DeliveryCard from '../../src/features/deliveries/components/DeliveryCard';
+import { openMaps } from '../../src/features/deliveries/openMaps';
 import { transformSessionToDriverRoute } from '../../src/features/deliveries/transformSession';
 import type { DriverRoute, DeliveryStop, OptimizeRequestLike } from '../../src/features/deliveries/types';
+
+type FilterKey = 'pending' | 'failed' | 'completed';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -23,6 +29,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function HomeScreen() {
   const [route, setRoute] = useState<DriverRoute | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('pending');
+  const [reportStopId, setReportStopId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
 
   const handleImportJson = async () => {
     try {
@@ -48,6 +57,7 @@ export default function HomeScreen() {
 
       setRoute(nextRoute);
       setOpenId(nextRoute.stops[0]?.id ?? null);
+      setActiveFilter('pending');
     } catch {
       Alert.alert('Import failed', 'Please upload a valid route JSON file.');
     }
@@ -88,16 +98,40 @@ export default function HomeScreen() {
     setOpenId(null);
   };
 
-  const handleReport = (stopId: string) => {
+  const handleNavigate = (stop: DeliveryStop) => {
+    openMaps({
+      lat: stop.lat,
+      lng: stop.lng,
+      address: stop.address,
+    });
+  };
+
+  const openReportModal = (stopId: string) => {
+    setReportStopId(stopId);
+    setReportReason('');
+  };
+
+  const submitReport = () => {
+    if (!reportStopId) return;
+
+    if (!reportReason.trim()) {
+      Alert.alert('Reason required', 'Please enter why the delivery could not be completed.');
+      return;
+    }
+
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
-    updateStop(stopId, (stop) => ({
+    updateStop(reportStopId, (stop) => ({
       ...stop,
+      notes: '',
       status: 'failed',
-      failureReason: stop.notes.trim(),
+      failureReason: reportReason.trim(),
     }));
 
     setOpenId(null);
+    setReportStopId(null);
+    setReportReason('');
+    setActiveFilter('failed');
   };
 
   const sortedStops = useMemo(() => {
@@ -116,8 +150,9 @@ export default function HomeScreen() {
     });
   }, [route]);
 
-  const pendingStops = sortedStops.filter((stop) => stop.status === 'pending');
-  const historyStops = sortedStops.filter((stop) => stop.status !== 'pending');
+  const filteredStops = useMemo(() => {
+    return sortedStops.filter((stop) => stop.status === activeFilter);
+  }, [sortedStops, activeFilter]);
 
   const remaining = route?.stops.filter((stop) => stop.status === 'pending').length ?? 0;
   const completed = route?.stops.filter((stop) => stop.status === 'completed').length ?? 0;
@@ -160,50 +195,99 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.statsRow}>
-            <View style={styles.statBlock}>
+            <Pressable
+              style={[styles.statBlock, activeFilter === 'pending' && styles.activeStatBlock]}
+              onPress={() => setActiveFilter('pending')}
+            >
               <Text style={styles.statNumber}>{remaining}</Text>
               <Text style={styles.statLabel}>Remaining</Text>
-            </View>
-            <View style={styles.statBlock}>
+            </Pressable>
+
+            <Pressable
+              style={[styles.statBlock, activeFilter === 'failed' && styles.activeStatBlock]}
+              onPress={() => setActiveFilter('failed')}
+            >
               <Text style={styles.statNumber}>{incomplete}</Text>
               <Text style={styles.statLabel}>Incomplete</Text>
-            </View>
-            <View style={styles.statBlock}>
+            </Pressable>
+
+            <Pressable
+              style={[styles.statBlock, activeFilter === 'completed' && styles.activeStatBlock]}
+              onPress={() => setActiveFilter('completed')}
+            >
               <Text style={styles.statNumber}>{completed}</Text>
               <Text style={styles.statLabel}>Completed</Text>
-            </View>
+            </Pressable>
           </View>
         </View>
 
-        {pendingStops.filter(Boolean).map((stop) => (
-          <DeliveryCard
-            key={stop.id}
-            stop={stop}
-            isOpen={openId === stop.id}
-            onToggle={() => handleToggle(stop.id)}
-            onChangeNote={(value) => handleChangeNote(stop.id, value)}
-            onComplete={() => handleComplete(stop.id)}
-            onReport={() => handleReport(stop.id)}
-          />
-        ))}
+        <Text style={styles.sectionTitle}>
+          {activeFilter === 'pending'
+            ? 'Remaining Stops'
+            : activeFilter === 'failed'
+            ? 'Incomplete Stops'
+            : 'Completed Stops'}
+        </Text>
 
-        {historyStops.length > 0 ? (
-          <View style={styles.historySection}>
-            <Text style={styles.historyTitle}>History</Text>
-            {historyStops.filter(Boolean).map((stop) => (
-              <DeliveryCard
-                key={stop.id}
-                stop={stop}
-                isOpen={openId === stop.id}
-                onToggle={() => handleToggle(stop.id)}
-                onChangeNote={(value) => handleChangeNote(stop.id, value)}
-                onComplete={() => {}}
-                onReport={() => {}}
-              />
-            ))}
+        {filteredStops.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No stops in this section.</Text>
           </View>
-        ) : null}
+        ) : (
+          filteredStops.map((stop) => (
+            <DeliveryCard
+              key={stop.id}
+              stop={stop}
+              isOpen={openId === stop.id}
+              onToggle={() => handleToggle(stop.id)}
+              onChangeNote={(value) => handleChangeNote(stop.id, value)}
+              onComplete={() => handleComplete(stop.id)}
+              onNavigate={() => handleNavigate(stop)}
+              onReportPress={() => openReportModal(stop.id)}
+            />
+          ))
+        )}
       </ScrollView>
+
+      <Modal
+        visible={!!reportStopId}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReportStopId(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Report Incomplete Delivery</Text>
+            <Text style={styles.modalSubtitle}>
+              Add the reason this stop could not be completed.
+            </Text>
+
+            <TextInput
+              value={reportReason}
+              onChangeText={setReportReason}
+              placeholder="Example: Gate locked, no access, customer unavailable"
+              multiline
+              style={styles.modalInput}
+            />
+
+            <View style={styles.modalButtonRow}>
+              <Pressable
+                style={styles.modalSecondaryButton}
+                onPress={() => {
+                  setReportStopId(null);
+                  setReportReason('');
+                }}
+              >
+                <Text style={styles.modalSecondaryText}>Cancel</Text>
+              </Pressable>
+
+              <Pressable style={styles.modalPrimaryButton} onPress={submitReport}>
+                <Text style={styles.modalPrimaryText}>Report</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -287,11 +371,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#f3f4f6',
     borderRadius: 18,
-    paddingVertical: 18,
+    paddingVertical: 10,
   },
   statBlock: {
     flex: 1,
     alignItems: 'center',
+    borderRadius: 14,
+    paddingVertical: 10,
+  },
+  activeStatBlock: {
+    backgroundColor: '#e5e7eb',
   },
   statNumber: {
     fontSize: 28,
@@ -303,13 +392,78 @@ const styles = StyleSheet.create({
     color: '#4b5563',
     marginTop: 4,
   },
-  historySection: {
-    marginTop: 8,
-  },
-  historyTitle: {
+  sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 10,
+  },
+  emptyState: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 18,
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    color: '#6b7280',
+    fontSize: 15,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(17, 24, 39, 0.35)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#4b5563',
+    marginBottom: 12,
+  },
+  modalInput: {
+    minHeight: 100,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 14,
+    padding: 12,
+    textAlignVertical: 'top',
+    marginBottom: 14,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalSecondaryButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalSecondaryText: {
+    fontWeight: '600',
+    color: '#111827',
+  },
+  modalPrimaryButton: {
+    flex: 1,
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalPrimaryText: {
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
