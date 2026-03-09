@@ -1,4 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
+import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   Alert,
@@ -27,11 +28,14 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   const [route, setRoute] = useState<DriverRoute | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('pending');
   const [reportStopId, setReportStopId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('');
+  const [navigationStop, setNavigationStop] = useState<DeliveryStop | null>(null);
 
   const handleImportJson = async () => {
     try {
@@ -50,9 +54,9 @@ export default function HomeScreen() {
 
       const response = await fetch(file.uri);
       const text = await response.text();
-      const parsed = JSON.parse(text) as { data?: OptimizeRequestLike } | OptimizeRequestLike;
+      const parsed = JSON.parse(text) as any;
 
-      const optimizeRequest = 'data' in parsed ? parsed.data ?? {} : parsed;
+      const optimizeRequest: OptimizeRequestLike = 'data' in parsed ? parsed.data ?? {} : parsed;
       const nextRoute = transformSessionToDriverRoute(optimizeRequest);
 
       setRoute(nextRoute);
@@ -64,12 +68,12 @@ export default function HomeScreen() {
   };
 
   const updateStop = (stopId: string, updater: (stop: DeliveryStop) => DeliveryStop) => {
-    setRoute((current) => {
+    setRoute((current: DriverRoute | null) => {
       if (!current) return current;
 
       return {
         ...current,
-        stops: current.stops.map((stop) => (stop.id === stopId ? updater(stop) : stop)),
+        stops: current.stops.map((stop: DeliveryStop) => (stop.id === stopId ? updater(stop) : stop)),
       };
     });
   };
@@ -98,12 +102,35 @@ export default function HomeScreen() {
     setOpenId(null);
   };
 
-  const handleNavigate = (stop: DeliveryStop) => {
-    openMaps({
-      lat: stop.lat,
-      lng: stop.lng,
-      address: stop.address,
+  const openInAppNavigation = (stop: DeliveryStop) => {
+    router.push({
+      pathname: '/navigation' as any,
+      params: {
+        stopNumber: String(stop.stopNumber),
+        customerName: stop.customerName,
+        phoneNumber: stop.phoneNumber ?? '',
+        address: stop.address,
+        packageCount: String(stop.packageCount),
+        lat: String(stop.lat),
+        lng: String(stop.lng),
+      },
     });
+  };
+
+  const handleNavigateChoice = (stop: DeliveryStop) => {
+    setNavigationStop(stop);
+  };
+
+  const openGoogleMapsExternal = async () => {
+    if (!navigationStop) return;
+
+    await openMaps({
+      lat: navigationStop.lat,
+      lng: navigationStop.lng,
+      address: navigationStop.address,
+    });
+
+    setNavigationStop(null);
   };
 
   const openReportModal = (stopId: string) => {
@@ -137,13 +164,13 @@ export default function HomeScreen() {
   const sortedStops = useMemo(() => {
     if (!route) return [];
 
-    const rank = {
+    const rank: Record<string, number> = {
       pending: 0,
       completed: 1,
       failed: 2,
     };
 
-    return [...route.stops].sort((a, b) => {
+    return [...route.stops].sort((a: DeliveryStop, b: DeliveryStop) => {
       const statusDiff = rank[a.status] - rank[b.status];
       if (statusDiff !== 0) return statusDiff;
       return a.stopNumber - b.stopNumber;
@@ -154,9 +181,9 @@ export default function HomeScreen() {
     return sortedStops.filter((stop) => stop.status === activeFilter);
   }, [sortedStops, activeFilter]);
 
-  const remaining = route?.stops.filter((stop) => stop.status === 'pending').length ?? 0;
-  const completed = route?.stops.filter((stop) => stop.status === 'completed').length ?? 0;
-  const incomplete = route?.stops.filter((stop) => stop.status === 'failed').length ?? 0;
+  const remaining = route?.stops.filter((stop: DeliveryStop) => stop.status === 'pending').length ?? 0;
+  const completed = route?.stops.filter((stop: DeliveryStop) => stop.status === 'completed').length ?? 0;
+  const incomplete = route?.stops.filter((stop: DeliveryStop) => stop.status === 'failed').length ?? 0;
   const total = route?.stops.length ?? 0;
   const progress = total === 0 ? 0 : completed / total;
 
@@ -240,9 +267,9 @@ export default function HomeScreen() {
               stop={stop}
               isOpen={openId === stop.id}
               onToggle={() => handleToggle(stop.id)}
-              onChangeNote={(value) => handleChangeNote(stop.id, value)}
+              onChangeNote={(value: string) => handleChangeNote(stop.id, value)}
               onComplete={() => handleComplete(stop.id)}
-              onNavigate={() => handleNavigate(stop)}
+              onNavigate={() => handleNavigateChoice(stop)}
               onReportPress={() => openReportModal(stop.id)}
             />
           ))
@@ -283,6 +310,50 @@ export default function HomeScreen() {
 
               <Pressable style={styles.modalPrimaryButton} onPress={submitReport}>
                 <Text style={styles.modalPrimaryText}>Report</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!navigationStop}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setNavigationStop(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Choose Navigation Mode</Text>
+            <Text style={styles.modalSubtitle}>
+              Compare both options and see which experience works best.
+            </Text>
+
+            <View style={styles.choiceButtonStack}>
+              <Pressable
+                style={styles.choicePrimaryButton}
+                onPress={() => {
+                  if (navigationStop) {
+                    openInAppNavigation(navigationStop);
+                  }
+                  setNavigationStop(null);
+                }}
+              >
+                <Text style={styles.choicePrimaryText}>View in App</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.choiceSecondaryButton}
+                onPress={openGoogleMapsExternal}
+              >
+                <Text style={styles.choiceSecondaryText}>Open in Google Maps</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.modalSecondaryButton}
+                onPress={() => setNavigationStop(null)}
+              >
+                <Text style={styles.modalSecondaryText}>Cancel</Text>
               </Pressable>
             </View>
           </View>
@@ -465,5 +536,30 @@ const styles = StyleSheet.create({
   modalPrimaryText: {
     fontWeight: '600',
     color: '#ffffff',
+  },
+  choiceButtonStack: {
+    gap: 10,
+  },
+  choicePrimaryButton: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  choicePrimaryText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  choiceSecondaryButton: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  choiceSecondaryText: {
+    color: '#111827',
+    fontWeight: '600',
   },
 });
