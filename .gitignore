@@ -1,6 +1,3 @@
-node_modules/
-ui/
-
 # Python
 __pycache__/
 *.py[cod]
