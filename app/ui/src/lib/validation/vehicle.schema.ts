@@ -46,7 +46,7 @@ export const vehicleSchema = z.object({
 export const vehiclesSchema = z
   .array(vehicleSchema)
   .superRefine((vehicles, ctx) => {
-    const seen = new Set<number>()
+    const seen = new Set<string>()
 
     vehicles.forEach((vehicle, index) => {
       if (seen.has(vehicle.id)) {
