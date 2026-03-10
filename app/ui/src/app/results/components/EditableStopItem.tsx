@@ -52,7 +52,7 @@ export default function EditableStopItem({ stop, isEditMode, onSaveNote }: Edita
           <div className="mt-2 flex justify-end">
             <button
               type="button"
-              onClick={() => onSaveNote(draft)} // when the user clicks save, we call onSaveNote and send the current text up. The page runs updateStopNote and updates the note in routes; key={stop.id} at call site resets draft when the stop changes.
+              onClick={() => onSaveNote(draft)} // when the user clicks save, we call onSaveNote and send the current text up. The page runs updateStopNote; key on parent <li> resets draft when the stop changes.
               className="inline-flex items-center rounded-md bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500"
             >
               Save

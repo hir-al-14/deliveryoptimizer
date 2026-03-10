@@ -2,7 +2,6 @@
 // Uses @react-google-maps/api with Advanced Markers
 "use client";
 
-/// <reference types="@types/google.maps" />
 import { useCallback, useEffect, useRef, useState, Fragment } from "react";
 import { LoadScriptNext, GoogleMap, Marker, Polyline } from "@react-google-maps/api";
 import type { Route } from "../types";
