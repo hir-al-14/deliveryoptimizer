@@ -76,3 +76,11 @@ add_test(
           "$<TARGET_FILE:deliveryoptimizer_api>" "${CURL_PROGRAM}"
 )
 set_tests_properties(DeliveryOptimizerApiValidationTest.OptimizeRejectsMalformedDeliveries PROPERTIES TIMEOUT 30)
+
+add_test(
+  NAME DeliveryOptimizerApiValidationTest.InvalidListenPortFailsFast
+  COMMAND "${BASH_PROGRAM}"
+          "${CMAKE_CURRENT_SOURCE_DIR}/integration/http_server/invalid_port_fails_fast_test.sh"
+          "$<TARGET_FILE:deliveryoptimizer_api>"
+)
+set_tests_properties(DeliveryOptimizerApiValidationTest.InvalidListenPortFailsFast PROPERTIES TIMEOUT 15)

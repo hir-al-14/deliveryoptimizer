@@ -1,9 +1,14 @@
 #include "deliveryoptimizer/api/server_options.hpp"
 
 #include <algorithm>
-#include <cerrno>
+#include <charconv>
+#include <cstdint>
 #include <cstdlib>
+#include <iostream>
 #include <limits>
+#include <optional>
+#include <string_view>
+#include <system_error>
 #include <thread>
 
 namespace {
@@ -11,22 +16,25 @@ namespace {
 constexpr std::uint16_t kDefaultListenPort = 8080U;
 constexpr std::size_t kMaxWorkerThreads = 64U;
 
-[[nodiscard]] std::uint16_t ResolveListenPort() {
+[[nodiscard]] std::optional<std::uint16_t> ResolveListenPort() {
   const char* raw_port = std::getenv("DELIVERYOPTIMIZER_PORT");
   if (raw_port == nullptr || *raw_port == '\0') {
     return kDefaultListenPort;
   }
 
-  errno = 0;
-  char* end = nullptr;
-  const long parsed = std::strtol(raw_port, &end, 10);
-  const bool invalid = errno != 0 || end == raw_port || *end != '\0' || parsed <= 0L ||
-                       parsed > static_cast<long>(std::numeric_limits<std::uint16_t>::max());
-  if (invalid) {
-    return kDefaultListenPort;
+  const std::string_view port_text{raw_port};
+  int parsed_port = 0;
+  const auto [end_ptr, error] =
+      std::from_chars(port_text.data(), port_text.data() + port_text.size(), parsed_port);
+
+  if (error != std::errc{} || end_ptr != port_text.data() + port_text.size() || parsed_port < 1 ||
+      parsed_port > static_cast<int>(std::numeric_limits<std::uint16_t>::max())) {
+    std::cerr << "Invalid DELIVERYOPTIMIZER_PORT='" << raw_port
+              << "'. Expected an integer in the range 1..65535.\n";
+    return std::nullopt;
   }
 
-  return static_cast<std::uint16_t>(parsed);
+  return static_cast<std::uint16_t>(parsed_port);
 }
 
 [[nodiscard]] std::size_t ResolveThreadCount() {
@@ -55,8 +63,13 @@ constexpr std::size_t kMaxWorkerThreads = 64U;
 
 namespace deliveryoptimizer::api {
 
-ServerOptions LoadServerOptionsFromEnv() {
-  return ServerOptions{.listen_port = ResolveListenPort(), .worker_threads = ResolveThreadCount()};
+std::optional<ServerOptions> LoadServerOptionsFromEnv() {
+  const auto listen_port = ResolveListenPort();
+  if (!listen_port.has_value()) {
+    return std::nullopt;
+  }
+
+  return ServerOptions{.listen_port = *listen_port, .worker_threads = ResolveThreadCount()};
 }
 
 } // namespace deliveryoptimizer::api

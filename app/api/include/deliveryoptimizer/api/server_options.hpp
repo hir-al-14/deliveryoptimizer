@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace deliveryoptimizer::api {
 
@@ -10,6 +11,6 @@ struct ServerOptions {
   std::size_t worker_threads;
 };
 
-[[nodiscard]] ServerOptions LoadServerOptionsFromEnv();
+[[nodiscard]] std::optional<ServerOptions> LoadServerOptionsFromEnv();
 
 } // namespace deliveryoptimizer::api

@@ -15,8 +15,12 @@ int RunApiServer() {
   RegisterOptimizeEndpoint(app);
 
   const auto options = LoadServerOptionsFromEnv();
-  app.addListener("0.0.0.0", options.listen_port);
-  app.setThreadNum(options.worker_threads);
+  if (!options.has_value()) {
+    return 1;
+  }
+
+  app.addListener("0.0.0.0", options->listen_port);
+  app.setThreadNum(options->worker_threads);
   app.run();
 
   return 0;

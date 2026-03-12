@@ -8,7 +8,7 @@ fi
 
 server_bin="$1"
 curl_bin="${2:-curl}"
-default_port="$((20000 + ($$ % 20000)))"
+default_port="$((20000 + ($$ % 1000)))"
 port="${DELIVERYOPTIMIZER_TEST_PORT:-${default_port}}"
 
 mktemp_file() {
