@@ -2,7 +2,7 @@ import { z } from "zod"
 import { locationSchema, loadSchema } from "./common.schema"
 
 export const vehicleSchema = z.object({
-  id: z.string().min(1),
+  id: z.number().int().nonnegative(),
 
   vehicleType: z.string().min(1),
 
@@ -23,7 +23,16 @@ export const vehicleSchema = z.object({
     .int()
     .nonnegative()
     .optional()
-  }).refine(
+  })
+  .refine(
+    (data) =>
+      (data.departureTime === undefined) === (data.returnTime === undefined),
+    {
+      message: "departureTime and returnTime must both be provided or both omitted",
+      path: ["returnTime"],
+    }
+  )
+  .refine(
     (data) =>
       data.departureTime == null ||
       data.returnTime == null ||
@@ -39,7 +48,7 @@ export const vehicleSchema = z.object({
 export const vehiclesSchema = z
   .array(vehicleSchema)
   .superRefine((vehicles, ctx) => {
-    const seen = new Set<string>()
+    const seen = new Set<number>()
 
     vehicles.forEach((vehicle, index) => {
       if (seen.has(vehicle.id)) {
