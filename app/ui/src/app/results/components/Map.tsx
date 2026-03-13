@@ -17,7 +17,7 @@ type MapComponentProps = {
 function AdvancedMarkers({ map, routes }: { map: google.maps.Map | null; routes: Route[] }) {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]); // markersRef is a ref that holds an array of the pin objects we'll create
 
-  useEffect(() => {
+  useEffect(() => { 
     if (!map || routes.length === 0) return;
 
     let cancelled = false;
@@ -29,7 +29,7 @@ function AdvancedMarkers({ map, routes }: { map: google.maps.Map | null; routes:
           "marker"
         )) as google.maps.MarkerLibrary;
 
-        if (cancelled) return; // If cancelled is true, meaning the component might've unmounted, we stop and don't create any pins
+        if (cancelled) return; // If cancelled is true, meaning the component might've unmounted, we stop and don't create any pins 
 
         routes.forEach((route) => { // For each route, we take its stops and sort them by sequence (visit order). We copy the array first so we don't mutate the original array
           const sorted = [...route.stops].sort((a, b) => a.sequence - b.sequence);
@@ -71,7 +71,7 @@ export default function MapComponent({ routes }: MapComponentProps) {
       if (routes.length === 0) return;
       const bounds = new google.maps.LatLngBounds(); // Create an empty box (LatLngBounds), then for each stop in every route, we extend that box to include the stop's lat/lng coords
       routes.forEach((route) => {
-        route.stops.forEach((s) => bounds.extend({ lat: s.lat, lng: s.lng }));
+        route.stops.forEach((s) => bounds.extend({ lat: s.lat, lng: s.lng })); 
       });
       mapInstance.fitBounds(bounds, 48);
     },
@@ -115,7 +115,7 @@ export default function MapComponent({ routes }: MapComponentProps) {
           mapContainerStyle={{ width: "100%", height: "100%" }}
           options={mapOptions}
           onLoad={onMapLoad} // when maps finished loading, google calls this and passes the map instance
-          onUnmount={onUnmount}
+          onUnmount={onUnmount} 
         >
           {mapId && <AdvancedMarkers map={map} routes={routes} />}
           {routes.map((route) => { // For each route, we sort the stops by sequence (visit order), then map the stops to an array of lat/lng objects
