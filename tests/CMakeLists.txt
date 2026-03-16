@@ -226,6 +226,16 @@ deliveryoptimizer_set_local_http_test_port(
   DeliveryOptimizerApiContractTest.DeliveriesOptimizeMissingServiceDefaultsTo300
   27000
 )
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiContractTest.DeliveriesOptimizeMissingDemandDefaultsTo1
+  deliveries_optimize_missing_demand_defaults_to_1_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiContractTest.DeliveriesOptimizeMissingDemandDefaultsTo1
+  28000
+)
 add_test(
   NAME DeliveryOptimizerTestHarnessTest.HttpServerHelpersKeepPortInRange
   COMMAND "${BASH_PROGRAM}"
@@ -288,6 +298,16 @@ deliveryoptimizer_set_local_http_test_port(
   33000
 )
 deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeEnforcesSolverTimeout
+  deliveries_optimize_enforces_solver_timeout_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeEnforcesSolverTimeout
+  37000
+)
+deliveryoptimizer_add_local_http_test(
   DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsOutOfRangeCoordinates
   deliveries_optimize_rejects_out_of_range_coordinates_test.sh
   30
@@ -296,6 +316,36 @@ deliveryoptimizer_add_local_http_test(
 deliveryoptimizer_set_local_http_test_port(
   DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsOutOfRangeCoordinates
   38000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsExcessiveVehicles
+  deliveries_optimize_rejects_excessive_vehicles_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsExcessiveVehicles
+  39000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsExcessiveJobs
+  deliveries_optimize_rejects_excessive_jobs_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsExcessiveJobs
+  40000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsExcessiveVroomOutput
+  deliveries_optimize_rejects_excessive_vroom_output_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsExcessiveVroomOutput
+  41000
 )
 
 if(DOCKER_PROGRAM)
