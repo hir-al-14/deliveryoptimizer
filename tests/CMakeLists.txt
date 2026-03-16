@@ -60,6 +60,7 @@ find_program(PYTHON3_PROGRAM python3 REQUIRED)
 find_program(DOCKER_PROGRAM docker)
 
 set(DELIVERYOPTIMIZER_LOCAL_API_LABELS "integration;api;local")
+set(DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS "integration;api;local;regression")
 
 function(deliveryoptimizer_set_local_http_test_port test_name port)
   set_tests_properties(
@@ -235,6 +236,66 @@ set_tests_properties(
   PROPERTIES
     TIMEOUT 30
     LABELS "integration;local;regression"
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsInvalidVehicleTimeWindow
+  deliveries_optimize_rejects_invalid_vehicle_time_window_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsInvalidVehicleTimeWindow
+  29000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizePreservesVehicleTimeWindow
+  deliveries_optimize_preserves_vehicle_time_window_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizePreservesVehicleTimeWindow
+  30000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsInvalidJobTimeWindows
+  deliveries_optimize_rejects_invalid_job_time_windows_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsInvalidJobTimeWindows
+  31000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizePreservesJobTimeWindows
+  deliveries_optimize_preserves_job_time_windows_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizePreservesJobTimeWindows
+  32000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsEmptyJobTimeWindows
+  deliveries_optimize_rejects_empty_job_time_windows_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsEmptyJobTimeWindows
+  33000
+)
+deliveryoptimizer_add_local_http_test(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsOutOfRangeCoordinates
+  deliveries_optimize_rejects_out_of_range_coordinates_test.sh
+  30
+  "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_set_local_http_test_port(
+  DeliveryOptimizerApiRegressionTest.DeliveriesOptimizeRejectsOutOfRangeCoordinates
+  38000
 )
 
 if(DOCKER_PROGRAM)
