@@ -22,7 +22,22 @@ Required tools:
 - `clangd`
 - `ninja` (optional, Makefiles also work)
 
-If a required tool is missing, you can use a temporary Nix shell:
+If you want a consistent LLVM toolchain for build + lint on macOS or Linux, prefer the repo flake:
+
+```bash
+nix develop
+```
+
+The flake shell includes:
+
+- `clang`, `clangd`, `clang-format`, `clang-tidy`
+- `cmake`, `conan`, `ninja`, `ccache`, `pkg-config`
+- `python3`
+- Docker and PostgreSQL tooling for the backend/e2e stack
+
+The flake shell is intentionally backend-only. Frontend Node tooling stays outside this shell.
+
+If you only need a temporary shell, you can still use:
 
 ```bash
 nix shell \

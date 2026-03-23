@@ -54,6 +54,21 @@ Run:
 ./build/build/Release/app/api/deliveryoptimizer-api
 ```
 
+## Nix Dev Shell
+
+Use the flake when you want one consistent backend LLVM toolchain for `clang`, `clangd`, and
+`clang-tidy` instead of mixing Apple clang with an external lint tool:
+
+```bash
+nix develop
+conan profile detect --force
+cmake --preset conan-release
+cmake --build --preset conan-release
+```
+
+The dev shell is backend-focused. It includes Docker and PostgreSQL tooling used by the backend
+and e2e stack, but it does not include frontend Node tooling.
+
 ## Routing Stack (Docker)
 
 ```bash
