@@ -53,7 +53,7 @@
             };
 
             shellHook = ''
-              # Nix clang on Darwin does not always discover libc++ headers, so lift them out of NIX_CFLAGS_COMPILE.
+              # Nix clang on Darwin does not always discover libc++ headers, so extract their include root from NIX_CFLAGS_COMPILE and add it to CPLUS_INCLUDE_PATH.
               if [ "$(uname -s)" = "Darwin" ] && [ -n "''${NIX_CFLAGS_COMPILE:-}" ]; then
                 libcxx_include_root="$(
                   printf '%s\n' "$NIX_CFLAGS_COMPILE" | tr ' ' '\n' | awk '/libcxx/ && /\/include$/ { print; exit }'
