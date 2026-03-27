@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import AddressGeocoder from './components/AddressGeocoder';
 
 export default function Home() {
   return (
+
     <div className="fixed inset-0 z-50 flex items-center justify-center gap-2">      
       <Link 
       href="/edit"
@@ -9,6 +11,8 @@ export default function Home() {
       >
       Edit
       </Link>
+      <AddressGeocoder />
+
     </div>
   );
 }
