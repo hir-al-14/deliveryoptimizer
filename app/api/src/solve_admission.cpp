@@ -12,7 +12,14 @@ SolveAdmissionStatus EvaluateSolveAdmission(const SolveAdmissionConfig& config,
   if (request_size.vehicles > config.max_sync_vehicles) {
     return SolveAdmissionStatus::kRejectedTooManyVehicles;
   }
-  if (active_solves >= config.max_concurrency && queued_solves >= config.max_queue_size) {
+
+  const std::size_t accepted_solves = active_solves + queued_solves;
+  const std::size_t reserved_concurrency_slots = std::min(accepted_solves, config.max_concurrency);
+  const std::size_t buffered_queue =
+      accepted_solves > config.max_concurrency ? accepted_solves - config.max_concurrency : 0U;
+
+  if (reserved_concurrency_slots >= config.max_concurrency &&
+      buffered_queue >= config.max_queue_size) {
     return SolveAdmissionStatus::kRejectedQueueFull;
   }
   return SolveAdmissionStatus::kAccepted;

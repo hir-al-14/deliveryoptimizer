@@ -64,3 +64,21 @@ TEST(SolveAdmissionTest, RejectsSolveWhenWorkersAndQueueAreFull) {
                                                            2U, 3U),
             deliveryoptimizer::api::SolveAdmissionStatus::kRejectedQueueFull);
 }
+
+TEST(SolveAdmissionTest, RejectsSolveWhenPendingAcceptedSolveAlreadyConsumesOnlyWorkerSlot) {
+  const deliveryoptimizer::api::SolveAdmissionConfig config{
+      .max_concurrency = 1U,
+      .max_queue_size = 0U,
+      .max_queue_wait = std::chrono::milliseconds{1000},
+      .max_sync_jobs = 5U,
+      .max_sync_vehicles = 2U,
+  };
+
+  EXPECT_EQ(deliveryoptimizer::api::EvaluateSolveAdmission(config,
+                                                           deliveryoptimizer::api::SolveRequestSize{
+                                                               .jobs = 1U,
+                                                               .vehicles = 1U,
+                                                           },
+                                                           0U, 1U),
+            deliveryoptimizer::api::SolveAdmissionStatus::kRejectedQueueFull);
+}
