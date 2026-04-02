@@ -1,5 +1,6 @@
 #include "deliveryoptimizer/api/server_options.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <gtest/gtest.h>
 #include <optional>
@@ -84,4 +85,25 @@ TEST(ServerOptionsTest, ExcessiveThreadCountIsCappedAndLogsWarning) {
 
   EXPECT_EQ(options.worker_threads, 64U);
   EXPECT_NE(stderr_output.find("Capping DELIVERYOPTIMIZER_THREADS"), std::string::npos);
+}
+
+TEST(ServerOptionsTest, ReadsSolverAdmissionOptionsFromEnv) {
+  ScopedEnvVar solver_max_concurrency("DELIVERYOPTIMIZER_SOLVER_MAX_CONCURRENCY");
+  ScopedEnvVar solver_max_queue_size("DELIVERYOPTIMIZER_SOLVER_MAX_QUEUE_SIZE");
+  ScopedEnvVar solver_queue_wait_ms("DELIVERYOPTIMIZER_SOLVER_QUEUE_WAIT_MS");
+  ScopedEnvVar solver_max_sync_jobs("DELIVERYOPTIMIZER_SOLVER_MAX_SYNC_JOBS");
+  ScopedEnvVar solver_max_sync_vehicles("DELIVERYOPTIMIZER_SOLVER_MAX_SYNC_VEHICLES");
+  solver_max_concurrency.Set("3");
+  solver_max_queue_size.Set("9");
+  solver_queue_wait_ms.Set("2500");
+  solver_max_sync_jobs.Set("321");
+  solver_max_sync_vehicles.Set("17");
+
+  const auto options = deliveryoptimizer::api::LoadServerOptionsFromEnv();
+
+  EXPECT_EQ(options.solve_admission.max_concurrency, 3U);
+  EXPECT_EQ(options.solve_admission.max_queue_size, 9U);
+  EXPECT_EQ(options.solve_admission.max_queue_wait, std::chrono::milliseconds{2500});
+  EXPECT_EQ(options.solve_admission.max_sync_jobs, 321U);
+  EXPECT_EQ(options.solve_admission.max_sync_vehicles, 17U);
 }
