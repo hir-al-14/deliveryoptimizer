@@ -59,7 +59,7 @@ SolveCoordinator::~SolveCoordinator() {
 }
 
 SolveAdmissionStatus SolveCoordinator::Submit(const SolveRequestSize& request_size,
-                                              Json::Value input_payload,
+                                              PayloadFactory payload_factory,
                                               CompletionCallback callback) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (shutting_down_) {
@@ -74,7 +74,7 @@ SolveAdmissionStatus SolveCoordinator::Submit(const SolveRequestSize& request_si
 
   queue_.push_back(QueuedSolveRequest{
       .sequence_number = next_sequence_number_++,
-      .input_payload = std::move(input_payload),
+      .payload_factory = std::move(payload_factory),
       .callback = std::move(callback),
       .deadline = std::chrono::steady_clock::now() + config_.max_queue_wait,
   });
@@ -98,7 +98,7 @@ void SolveCoordinator::WorkerLoop() {
     }
     condition_.notify_all();
 
-    const VroomRunResult solve_result = runner_->Run(queued_request->input_payload);
+    const VroomRunResult solve_result = runner_->Run(queued_request->payload_factory());
     queued_request->callback(ToCoordinatedSolveResult(solve_result));
 
     {

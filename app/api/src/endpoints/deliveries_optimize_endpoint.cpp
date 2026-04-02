@@ -715,18 +715,18 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
         }
 
         OptimizeRequestInput optimize_request = std::move(parsed_input.value());
+        auto optimize_request_ptr =
+            std::make_shared<OptimizeRequestInput>(std::move(optimize_request));
         const SolveRequestSize request_size{
-            .jobs = optimize_request.jobs.size(),
-            .vehicles = optimize_request.vehicles.size(),
+            .jobs = optimize_request_ptr->jobs.size(),
+            .vehicles = optimize_request_ptr->vehicles.size(),
         };
-        const Json::Value vroom_input = BuildVroomInput(optimize_request);
 
-        const SolveAdmissionStatus admission_status =
-            coordinator->Submit(request_size, vroom_input,
-                                [optimize_request = std::move(optimize_request),
-                                 respond](CoordinatedSolveResult result) mutable {
-                                  respond(BuildSolveExecutionResponse(optimize_request, result));
-                                });
+        const SolveAdmissionStatus admission_status = coordinator->Submit(
+            request_size, [optimize_request_ptr] { return BuildVroomInput(*optimize_request_ptr); },
+            [optimize_request_ptr, respond](CoordinatedSolveResult result) mutable {
+              respond(BuildSolveExecutionResponse(*optimize_request_ptr, result));
+            });
         if (admission_status != SolveAdmissionStatus::kAccepted) {
           respond(BuildAdmissionRejectionResponse(admission_status));
         }

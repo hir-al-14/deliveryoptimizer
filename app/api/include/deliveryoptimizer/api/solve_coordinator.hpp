@@ -32,6 +32,7 @@ struct CoordinatedSolveResult {
 class SolveCoordinator {
 public:
   using CompletionCallback = std::function<void(CoordinatedSolveResult)>;
+  using PayloadFactory = std::function<Json::Value()>;
 
   SolveCoordinator(SolveAdmissionConfig config, std::shared_ptr<const VroomRunner> runner);
   ~SolveCoordinator();
@@ -42,12 +43,13 @@ public:
   SolveCoordinator& operator=(SolveCoordinator&&) = delete;
 
   [[nodiscard]] SolveAdmissionStatus Submit(const SolveRequestSize& request_size,
-                                            Json::Value input_payload, CompletionCallback callback);
+                                            PayloadFactory payload_factory,
+                                            CompletionCallback callback);
 
 private:
   struct QueuedSolveRequest {
     std::uint64_t sequence_number;
-    Json::Value input_payload;
+    PayloadFactory payload_factory;
     CompletionCallback callback;
     std::chrono::steady_clock::time_point deadline;
   };
