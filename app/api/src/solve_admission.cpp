@@ -1,5 +1,7 @@
 #include "deliveryoptimizer/api/solve_admission.hpp"
 
+#include <algorithm>
+
 namespace deliveryoptimizer::api {
 
 SolveAdmissionStatus EvaluateSolveAdmission(const SolveAdmissionConfig& config,
