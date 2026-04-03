@@ -15,7 +15,8 @@ namespace {
 
 class BlockingRunner final : public deliveryoptimizer::api::VroomRunner {
 public:
-  deliveryoptimizer::api::VroomRunResult Run(const Json::Value&) const override {
+  deliveryoptimizer::api::VroomRunResult Run(const Json::Value& input) const override {
+    (void)input;
     {
       std::lock_guard<std::mutex> lock(mutex_);
       started_ = true;
@@ -76,7 +77,9 @@ TEST(SolveCoordinatorTest, DoesNotInvokePayloadFactoryWhenSolveIsRejectedForSync
         payload_factory_called.store(true);
         return Json::Value{Json::objectValue};
       },
-      [](deliveryoptimizer::api::CoordinatedSolveResult) { FAIL() << "callback should not run"; });
+      [](const deliveryoptimizer::api::CoordinatedSolveResult&) {
+        FAIL() << "callback should not run";
+      });
 
   EXPECT_EQ(status, deliveryoptimizer::api::SolveAdmissionStatus::kRejectedTooManyJobs);
   EXPECT_FALSE(payload_factory_called.load());
@@ -90,19 +93,20 @@ TEST(SolveCoordinatorTest, DoesNotInvokePayloadFactoryWhenSolveIsRejectedForQueu
   std::atomic<bool> first_payload_factory_called{false};
   std::atomic<bool> second_payload_factory_called{false};
 
-  ASSERT_EQ(coordinator.Submit(
-                deliveryoptimizer::api::SolveRequestSize{
-                    .jobs = 1U,
-                    .vehicles = 1U,
-                },
-                [&first_payload_factory_called] {
-                  first_payload_factory_called.store(true);
-                  return Json::Value{Json::objectValue};
-                },
-                [&first_result_promise](deliveryoptimizer::api::CoordinatedSolveResult result) {
-                  first_result_promise.set_value(result);
-                }),
-            deliveryoptimizer::api::SolveAdmissionStatus::kAccepted);
+  ASSERT_EQ(
+      coordinator.Submit(
+          deliveryoptimizer::api::SolveRequestSize{
+              .jobs = 1U,
+              .vehicles = 1U,
+          },
+          [&first_payload_factory_called] {
+            first_payload_factory_called.store(true);
+            return Json::Value{Json::objectValue};
+          },
+          [&first_result_promise](const deliveryoptimizer::api::CoordinatedSolveResult& result) {
+            first_result_promise.set_value(result);
+          }),
+      deliveryoptimizer::api::SolveAdmissionStatus::kAccepted);
 
   runner->WaitUntilStarted();
 
@@ -115,7 +119,9 @@ TEST(SolveCoordinatorTest, DoesNotInvokePayloadFactoryWhenSolveIsRejectedForQueu
         second_payload_factory_called.store(true);
         return Json::Value{Json::objectValue};
       },
-      [](deliveryoptimizer::api::CoordinatedSolveResult) { FAIL() << "callback should not run"; });
+      [](const deliveryoptimizer::api::CoordinatedSolveResult&) {
+        FAIL() << "callback should not run";
+      });
 
   EXPECT_EQ(second_status, deliveryoptimizer::api::SolveAdmissionStatus::kRejectedQueueFull);
   EXPECT_TRUE(first_payload_factory_called.load());
@@ -146,31 +152,33 @@ TEST(SolveCoordinatorTest, WorkerRejectsQueuedSolveThatExpiredBeforeDequeue) {
   auto second_result_future = second_result_promise.get_future();
   std::atomic<bool> second_payload_factory_called{false};
 
-  ASSERT_EQ(coordinator.Submit(
-                deliveryoptimizer::api::SolveRequestSize{
-                    .jobs = 1U,
-                    .vehicles = 1U,
-                },
-                [] { return Json::Value{Json::objectValue}; },
-                [&first_result_promise](deliveryoptimizer::api::CoordinatedSolveResult result) {
-                  first_result_promise.set_value(result);
-                }),
-            deliveryoptimizer::api::SolveAdmissionStatus::kAccepted);
+  ASSERT_EQ(
+      coordinator.Submit(
+          deliveryoptimizer::api::SolveRequestSize{
+              .jobs = 1U,
+              .vehicles = 1U,
+          },
+          [] { return Json::Value{Json::objectValue}; },
+          [&first_result_promise](const deliveryoptimizer::api::CoordinatedSolveResult& result) {
+            first_result_promise.set_value(result);
+          }),
+      deliveryoptimizer::api::SolveAdmissionStatus::kAccepted);
   runner->WaitUntilStarted();
 
-  ASSERT_EQ(coordinator.Submit(
-                deliveryoptimizer::api::SolveRequestSize{
-                    .jobs = 1U,
-                    .vehicles = 1U,
-                },
-                [&second_payload_factory_called] {
-                  second_payload_factory_called.store(true);
-                  return Json::Value{Json::objectValue};
-                },
-                [&second_result_promise](deliveryoptimizer::api::CoordinatedSolveResult result) {
-                  second_result_promise.set_value(result);
-                }),
-            deliveryoptimizer::api::SolveAdmissionStatus::kAccepted);
+  ASSERT_EQ(
+      coordinator.Submit(
+          deliveryoptimizer::api::SolveRequestSize{
+              .jobs = 1U,
+              .vehicles = 1U,
+          },
+          [&second_payload_factory_called] {
+            second_payload_factory_called.store(true);
+            return Json::Value{Json::objectValue};
+          },
+          [&second_result_promise](const deliveryoptimizer::api::CoordinatedSolveResult& result) {
+            second_result_promise.set_value(result);
+          }),
+      deliveryoptimizer::api::SolveAdmissionStatus::kAccepted);
 
   std::this_thread::sleep_for(std::chrono::milliseconds{100});
   runner->Release();

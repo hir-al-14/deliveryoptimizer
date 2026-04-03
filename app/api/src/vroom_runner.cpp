@@ -329,10 +329,7 @@ BuildSpawnArguments(const deliveryoptimizer::api::VroomRuntimeConfig& runtime_co
   }
   while (waitpid(process_id, &command_status, 0) == -1) {
     if (errno != EINTR) {
-      if (errno == ECHILD) {
-        return true;
-      }
-      return false;
+      return errno == ECHILD;
     }
   }
   return true;

@@ -162,7 +162,7 @@ ParseNonNegativeEpochSeconds(const Json::Value& value) {
 }
 
 [[nodiscard]] std::optional<std::vector<TimeWindow>> ParseTimeWindows(const Json::Value& value) {
-  if (!value.isArray() || value.size() == 0U) {
+  if (!value.isArray() || value.empty()) {
     return std::nullopt;
   }
 
@@ -727,7 +727,7 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
 
         const SolveAdmissionStatus admission_status = coordinator->Submit(
             request_size, [optimize_request_ptr] { return BuildVroomInput(*optimize_request_ptr); },
-            [optimize_request_ptr, respond](CoordinatedSolveResult result) mutable {
+            [optimize_request_ptr, respond](const CoordinatedSolveResult& result) mutable {
               respond(BuildSolveExecutionResponse(*optimize_request_ptr, result));
             });
         if (admission_status != SolveAdmissionStatus::kAccepted) {

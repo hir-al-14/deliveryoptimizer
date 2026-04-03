@@ -26,6 +26,11 @@ public:
     unsetenv(name_.c_str());
   }
 
+  ScopedEnvVar(const ScopedEnvVar&) = delete;
+  ScopedEnvVar& operator=(const ScopedEnvVar&) = delete;
+  ScopedEnvVar(ScopedEnvVar&&) = delete;
+  ScopedEnvVar& operator=(ScopedEnvVar&&) = delete;
+
   void Set(const char* value) const { ASSERT_EQ(setenv(name_.c_str(), value, 1), 0); }
 
   void Unset() const { ASSERT_EQ(unsetenv(name_.c_str()), 0); }

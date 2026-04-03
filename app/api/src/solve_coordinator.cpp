@@ -39,7 +39,7 @@ namespace deliveryoptimizer::api {
 SolveCoordinator::SolveCoordinator(SolveAdmissionConfig config,
                                    std::shared_ptr<const VroomRunner> runner,
                                    SolveCoordinatorOptions options)
-    : config_(std::move(config)), options_(options), runner_(std::move(runner)) {
+    : config_(config), options_(options), runner_(std::move(runner)) {
   workers_.reserve(config_.max_concurrency);
   for (std::size_t index = 0U; index < config_.max_concurrency; ++index) {
     workers_.emplace_back([this] { WorkerLoop(); });
