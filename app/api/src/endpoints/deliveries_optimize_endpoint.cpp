@@ -15,6 +15,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <trantor/net/EventLoop.h>
 #include <utility>
 #include <vector>
 
@@ -694,9 +695,9 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
         auto response_callback =
             std::make_shared<std::function<void(const drogon::HttpResponsePtr&)>>(
                 std::move(callback));
-        trantor::EventLoop* response_loop = drogon::app().getLoop();
-        if (const auto connection = request->getConnectionPtr().lock(); connection) {
-          response_loop = connection->getLoop();
+        trantor::EventLoop* response_loop = trantor::EventLoop::getEventLoopOfCurrentThread();
+        if (response_loop == nullptr) {
+          response_loop = drogon::app().getLoop();
         }
 
         const auto respond = [response_callback,
