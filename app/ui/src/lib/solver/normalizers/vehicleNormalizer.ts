@@ -28,11 +28,7 @@ export function normalizeVehicle(
 
     capacity: [input.capacity.value],
 
-    timeWindow:
-      input.departureTime !== undefined &&
-      input.returnTime !== undefined
-        ? [input.departureTime, input.returnTime]
-        : undefined
+    timeWindow: input.timeWindow
   }
 }
 
