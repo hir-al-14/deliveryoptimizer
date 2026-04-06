@@ -62,7 +62,11 @@ export function loadSessionFromFile(
         return
       }
 
-      onSuccess(saveFile.data)
+      try {
+        onSuccess(saveFile.data)
+      } catch (e) {
+        onError("Failed to load session: " + (e instanceof Error ? e.message : "unknown error"))
+      }
     } finally {
       finish()
     }

@@ -51,7 +51,7 @@ export function downloadSessionSave(state: OptimizeRequest): SessionExportResult
     link.click()
     link.remove()
 
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 100)
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
 
     return { ok: true, filename }
   } catch (e) {
