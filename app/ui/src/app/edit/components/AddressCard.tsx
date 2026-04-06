@@ -4,7 +4,7 @@
  * Single delivery stop: desktop grid, or mobile accordion with stacked fields.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TIME_OPTIONS,
   TIME_BUFFER_OPTIONS,
@@ -65,8 +65,13 @@ export default function AddressCard({
   confirmAddress,
   addressTouched,
 }: AddressCardProps) {
-  const [expanded, setExpanded] = useState(!a.locked);
-
+  
+  const [manualExpanded, setManualExpanded] = useState(false);
+  const expanded = !a.locked || manualExpanded;
+  useEffect(() => {
+    if (!a.locked) setManualExpanded(false);
+  }, [a.locked]);
+  
   const addrInvalid = addressTouched && !a.recipientAddress.trim();
   const bufferInvalid = addressTouched && !a.timeBuffer;
   const deliveryTimeInvalid =
@@ -277,7 +282,9 @@ export default function AddressCard({
       <div className="lg:hidden">
         <button
           type="button"
-          onClick={() => setExpanded((e) => !e)}
+          onClick={() => {
+            if (a.locked) setManualExpanded((e) => !e);
+          }}          
           aria-expanded={expanded}
           aria-controls={panelId}
           className={ACCORDION_TRIGGER}
