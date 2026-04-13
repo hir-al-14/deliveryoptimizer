@@ -6,6 +6,8 @@ export const vehicleSchema = z.object({
 
   vehicleType: z.enum(["truck", "car", "bicycle"]),
 
+  driverName: z.string().min(1),
+
   startLocation: locationSchema,
 
   endLocation: locationSchema.optional(),

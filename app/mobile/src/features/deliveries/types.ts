@@ -1,14 +1,18 @@
-export type DeliveryStatus = 'pending' | 'completed';
+export type DeliveryStatus = 'pending' | 'completed' | 'failed';
 
 export type DeliveryStop = {
   id: string;
   stopNumber: number;
   address: string;
   customerName: string;
+  phoneNumber?: string;
   packageCount: number;
   notes: string;
   status: DeliveryStatus;
+  lat: number;
+  lng: number;
   completedAt?: string;
+  failureReason?: string;
 };
 
 export type DriverRoute = {
@@ -18,17 +22,23 @@ export type DriverRoute = {
 };
 
 export type OptimizeRequestLike = {
-  deliveries?: Array<{
+  deliveries?: {
     id: number;
     recipientName?: string;
+    phoneNumber?: string;
     address?: string;
     notes?: string;
+    location?: {
+      lat: number;
+      lng: number;
+    };
     demand?: {
       value?: number;
     };
-  }>;
-  vehicles?: Array<{
+  }[];
+  vehicles?: {
     id: number;
     driverName?: string;
-  }>;
+    vehicleType?: string;
+  }[];
 };
