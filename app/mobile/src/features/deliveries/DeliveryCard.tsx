@@ -32,6 +32,7 @@ export default function DeliveryCard({
   const isCompleted = stop.status === 'completed';
   const isFailed = stop.status === 'failed';
   const isDone = isCompleted || isFailed;
+  const canSubmitFailure = failureReason.trim().length > 0;
   const completedAtText = stop.completedAt
     ? new Date(stop.completedAt).toLocaleString()
     : null;
@@ -113,8 +114,22 @@ export default function DeliveryCard({
                 placeholder="Enter failure reason"
                 multiline
               />
-              <Pressable style={styles.actionButton} onPress={() => onSubmitFailure(failureReason)}>
-                <Text style={styles.actionText}>Mark as Failed</Text>
+              <Pressable
+                style={[
+                  styles.actionButton,
+                  !canSubmitFailure && styles.disabledButton,
+                ]}
+                disabled={!canSubmitFailure}
+                onPress={() => onSubmitFailure(failureReason)}
+              >
+                <Text
+                  style={[
+                    styles.actionText,
+                    !canSubmitFailure && styles.disabledText,
+                  ]}
+                >
+                  Mark as Failed
+                </Text>
               </Pressable>
             </View>
           )}

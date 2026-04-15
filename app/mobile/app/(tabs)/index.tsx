@@ -86,11 +86,18 @@ export default function HomeScreen() {
   };
 
   const handleSubmitFailure = (stopId: string, reason: string) => {
+    const trimmedReason = reason.trim();
+
+    if (!trimmedReason) {
+      Alert.alert('Failure reason required', 'Please enter a reason before submitting.');
+      return;
+    }
+
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
     updateStop(stopId, {
       status: 'failed',
-      failureReason: reason,
+      failureReason: trimmedReason,
     });
 
     setReportingStopId(null);
