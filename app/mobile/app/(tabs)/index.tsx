@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   LayoutAnimation,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -148,43 +147,6 @@ export default function HomeScreen() {
     setOpenId(null);
   };
 
-  const handleNavigate = async (stopId: string) => {
-    const stop = route?.stops.find((routeStop) => routeStop.id === stopId);
-
-    if (!stop) {
-      Alert.alert('Navigation failed', 'We could not find that stop.');
-      return;
-    }
-
-    const destination = `${stop.lat},${stop.lng}`;
-    const googleMapsAppUrl = `comgooglemaps://?daddr=${destination}&directionsmode=driving`;
-    const appleMapsUrl = `http://maps.apple.com/?daddr=${destination}&dirflg=d`;
-    const geoUri = `geo:${destination}?q=${destination}`;
-    const googleMapsWebUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-
-    try {
-      if (await Linking.canOpenURL(googleMapsAppUrl)) {
-        await Linking.openURL(googleMapsAppUrl);
-        return;
-      }
-
-      if (Platform.OS === 'ios') {
-        await Linking.openURL(appleMapsUrl);
-        return;
-      }
-
-      if (await Linking.canOpenURL(geoUri)) {
-        await Linking.openURL(geoUri);
-        return;
-      }
-
-      await Linking.openURL(googleMapsWebUrl);
-    } catch (error) {
-      console.error('Failed to open navigation app', error);
-      Alert.alert('Navigation failed', 'We could not open a navigation app for this stop.');
-    }
-  };
-
   const handleFinishRoute = () => {
     if (!route) {
       return;
@@ -225,7 +187,7 @@ export default function HomeScreen() {
 
   const stops = route?.stops || [];
   const pendingStops = stops.filter((stop) => stop.status === 'pending');
-  const historyStops = stops.filter((stop) => stop.status !== 'pending');
+  const historicalStops = stops.filter((stop) => stop.status !== 'pending');
   const completedCount = stops.filter((stop) => stop.status === 'completed').length;
   const failedCount = stops.filter((stop) => stop.status === 'failed').length;
   const progress = stops.length > 0 ? completedCount / stops.length : 0;
@@ -316,11 +278,11 @@ export default function HomeScreen() {
           />
         ))}
 
-        {historyStops.length > 0 && (
+        {historicalStops.length > 0 && (
           <View style={styles.historySection}>
             <Text style={styles.historyTitle}>History</Text>
 
-            {historyStops.map((stop) => (
+            {historicalStops.map((stop) => (
               <DeliveryCard
                 key={stop.id}
                 stop={stop}
