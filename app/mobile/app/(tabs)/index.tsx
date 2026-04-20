@@ -15,7 +15,6 @@ export default function HomeScreen() {
   const [route, setRoute] = useState<DriverRoute | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [reportingStopId, setReportingStopId] = useState<string | null>(null);
-  const [failureReason, setFailureReason] = useState('');
 
   const handleImportJson = async () => {
     try {
@@ -82,7 +81,6 @@ export default function HomeScreen() {
   const handleReport = (stopId: string) => {
     setReportingStopId(stopId);
     setOpenId(stopId);
-    setFailureReason('');
   };
 
   const handleSubmitFailure = (stopId: string, reason: string) => {
@@ -102,7 +100,6 @@ export default function HomeScreen() {
 
     setReportingStopId(null);
     setOpenId(null);
-    setFailureReason('');
   };
 
   const stops = route?.stops || [];
@@ -177,8 +174,6 @@ export default function HomeScreen() {
             onComplete={() => handleComplete(stop.id)}
             onReport={() => handleReport(stop.id)}
             isReporting={reportingStopId === stop.id}
-            failureReason={failureReason}
-            onChangeFailureReason={setFailureReason}
             onSubmitFailure={(reason) => handleSubmitFailure(stop.id, reason)}
           />
         ))}
@@ -197,8 +192,6 @@ export default function HomeScreen() {
                 onComplete={() => {}}
                 onReport={() => {}}
                 isReporting={false}
-                failureReason={''}
-                onChangeFailureReason={() => {}}
                 onSubmitFailure={() => {}}
               />
             ))}

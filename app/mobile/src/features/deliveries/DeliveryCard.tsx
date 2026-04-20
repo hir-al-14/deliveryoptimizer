@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { DeliveryStop } from './types';
 
@@ -10,8 +10,6 @@ type Props = {
   onComplete: () => void;
   onReport: () => void;
   isReporting: boolean;
-  failureReason: string;
-  onChangeFailureReason: (value: string) => void;
   onSubmitFailure: (reason: string) => void;
 };
 
@@ -23,10 +21,9 @@ export default function DeliveryCard({
   onComplete,
   onReport,
   isReporting,
-  failureReason,
-  onChangeFailureReason,
   onSubmitFailure,
 }: Props) {
+  const [failureReason, setFailureReason] = useState('');
   const isCompleted = stop.status === 'completed';
   const isFailed = stop.status === 'failed';
   const isDone = isCompleted || isFailed;
@@ -34,6 +31,12 @@ export default function DeliveryCard({
   const completedAtText = stop.completedAt
     ? new Date(stop.completedAt).toLocaleString()
     : null;
+
+  useEffect(() => {
+    if (isReporting) {
+      setFailureReason('');
+    }
+  }, [isReporting]);
 
   return (
     <Pressable
@@ -102,7 +105,7 @@ export default function DeliveryCard({
               <TextInput
                 style={styles.noteInput}
                 value={failureReason}
-                onChangeText={onChangeFailureReason}
+                onChangeText={setFailureReason}
                 placeholder="Enter failure reason"
                 multiline
               />
