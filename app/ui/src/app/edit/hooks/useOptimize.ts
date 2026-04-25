@@ -47,19 +47,6 @@ function isOptimizationJobStatusResponse(
       typeof (value as { status?: unknown }).status === "string"
   )
 }
-export function useOptimize(
-  vehicles: VehicleRow[],
-  addresses: AddressCard[],
-  cacheVehicleLocation: (id: number, lat: number, lng: number, state?: string | null) => void,
-  cacheAddressLocation: (id: number, lat: number, lng: number, state?: string | null) => void
-) {
-  const router = useRouter();
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [optimizeError, setOptimizeError] = useState<string | null>(null);
-  const [geocodeFailedAddressIds, setGeocodeFailedAddressIds] = useState<number[]>([]);
-  const [geocodeFailedVehicleIds, setGeocodeFailedVehicleIds] = useState<number[]>([]);
-  const [outOfRegionAddressIds, setOutOfRegionAddressIds] = useState<number[]>([]);
-  const [outOfRegionVehicleIds, setOutOfRegionVehicleIds] = useState<number[]>([]);
 
 function readErrorMessage(body: unknown, fallback: string): string {
   if (
@@ -86,7 +73,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export function useOptimize(vehicles: VehicleRow[], addresses: AddressCard[]) {
+export function useOptimize(
+  vehicles: VehicleRow[],
+  addresses: AddressCard[],
+  cacheVehicleLocation: (id: number, lat: number, lng: number, state?: string | null) => void,
+  cacheAddressLocation: (id: number, lat: number, lng: number, state?: string | null) => void
+) {
   const router = useRouter()
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [optimizeError, setOptimizeError] = useState<string | null>(null)
@@ -96,7 +88,7 @@ export function useOptimize(vehicles: VehicleRow[], addresses: AddressCard[]) {
   const [outOfRegionVehicleIds, setOutOfRegionVehicleIds] = useState<number[]>([])
   const [optimizationJobId, setOptimizationJobId] = useState<string | null>(null)
   const [result, setResult] = useState<unknown>(null)
-
+ 
   const optimize = useCallback(async () => {
     setOptimizeError(null)
     setGeocodeFailedAddressIds([])
