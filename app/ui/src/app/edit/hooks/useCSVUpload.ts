@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useState } from "react";
-import Papa from "papaparse";
+import Papa, { type ParseError } from "papaparse";
 import type { AddressCard } from "../types/delivery";
 import { resolveColumns, normalizeTimeOption, bufferSecondsToLabel } from "@/app/edit/utils/csvParserUtils";
 import { hasAtLeastOneLetter } from "@/app/components/AddressGeocoder/utils";
@@ -79,7 +79,7 @@ function parseCsvAddressUpload(content: string): Promise<AddressCard[]> {
           reject(error);
         }
       },
-      error: (error) => {
+      error: (error: ParseError) => {
         reject(new Error(`CSV parsing error: ${error.message}`));
       },
     });
